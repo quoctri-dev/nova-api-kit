@@ -194,14 +194,23 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### :material/key: API Keys")
-    st.caption("Keys stay in your browser. Set here or via .env")
 
     api_keys = {}
     for pid, pcfg in PROVIDERS_CONFIG.items():
         env_val = os.getenv(pcfg["env_key"], "")
-        api_keys[pid] = st.text_input(
-            pcfg["name"], value=env_val, type="password", key=f"k_{pid}",
-        )
+        if env_val:
+            # Key exists in server env/secrets — use it silently, show masked hint
+            api_keys[pid] = env_val
+            st.text_input(
+                pcfg["name"], value="••••••••" + env_val[-4:], disabled=True, key=f"k_{pid}",
+            )
+        else:
+            # No server key — let user paste their own (stays in browser session only)
+            st.caption("Keys stay in your session only. Never stored.")
+            api_keys[pid] = st.text_input(
+                pcfg["name"], value="", type="password", key=f"k_{pid}",
+                placeholder=f"Paste your {pcfg['name']} key",
+            )
 
     st.markdown("---")
     st.caption(":material/bolt: **NoVa API Kit** v1.0")
