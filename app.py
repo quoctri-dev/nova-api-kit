@@ -193,24 +193,20 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.markdown("### :material/key: API Keys")
 
+    # API keys: load silently from server secrets, NEVER show in UI
     api_keys = {}
     for pid, pcfg in PROVIDERS_CONFIG.items():
-        env_val = os.getenv(pcfg["env_key"], "")
-        if env_val:
-            # Key exists in server env/secrets — use it silently, show masked hint
-            api_keys[pid] = env_val
-            st.text_input(
-                pcfg["name"], value="••••••••" + env_val[-4:], disabled=True, key=f"k_{pid}",
-            )
-        else:
-            # No server key — let user paste their own (stays in browser session only)
-            st.caption("Keys stay in your session only. Never stored.")
-            api_keys[pid] = st.text_input(
-                pcfg["name"], value="", type="password", key=f"k_{pid}",
-                placeholder=f"Paste your {pcfg['name']} key",
-            )
+        api_keys[pid] = os.getenv(pcfg["env_key"], "")
+
+    # Show connection status only (no key values, no input fields)
+    connected = [pcfg["name"] for pid, pcfg in PROVIDERS_CONFIG.items() if api_keys[pid]]
+    if connected:
+        st.markdown(f"### :material/check_circle: Connected")
+        for name in connected:
+            st.caption(f"✓ {name}")
+    else:
+        st.warning("No AI provider configured. Set API keys in server secrets.")
 
     st.markdown("---")
     st.caption(":material/bolt: **NoVa API Kit** v1.0")
